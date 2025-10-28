@@ -15,45 +15,46 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-# ---- 页面与侧边栏 ----
+# ---- Page & sidebar ----
 st.set_page_config(page_title="Generative Abstract Poster", layout="centered")
 st.title("Generative Abstract Poster")
 st.caption("Week 2 • Arts and Advanced Big Data • Made by Boyang Wang")
 
 with st.sidebar:
-    st.header("参数 / Parameters")
-    seed_mode = st.radio("随机种子", ["每次随机", "固定数值"], index=0)
-    seed_value = st.number_input("固定种子值", value=42, step=1)
-    n_layers = st.slider("图层数量 (n_layers)", 1, 40, 12)
-    palette_k = st.slider("调色板颜色数 (k)", 2, 64, 16)
-    r_min, r_max = st.slider("半径范围 rr", 0.05, 0.6, (0.2, 0.3))
-    wobble_min, wobble_max = st.slider("抖动范围 wobble", 0.00, 0.60, (0.10, 0.30))
-    alpha_min, alpha_max = st.slider("透明度范围 alpha", 0.05, 1.0, (0.25, 0.60))
-    points = st.slider("轮廓点数 (points)", 50, 800, 200)
-    figsize_w = st.slider("画布宽 (英寸)", 4, 12, 7)
-    figsize_h = st.slider("画布高 (英寸)", 4, 16, 10)
+    st.header("Parameters")
+    seed_mode = st.radio("Random seed", ["Random each run", "Fixed value"], index=0)
+    seed_value = st.number_input("Fixed seed value", value=42, step=1)
+    n_layers = st.slider("Number of layers (n_layers)", 1, 40, 12)
+    palette_k = st.slider("Palette size (k)", 2, 64, 16)
+    r_min, r_max = st.slider("Radius range (rr)", 0.05, 0.60, (0.20, 0.30))
+    wobble_min, wobble_max = st.slider("Wobble range", 0.00, 0.60, (0.10, 0.30))
+    alpha_min, alpha_max = st.slider("Alpha range", 0.05, 1.00, (0.25, 0.60))
+    points = st.slider("Outline points (resolution)", 50, 800, 200)
+    figsize_w = st.slider("Figure width (inches)", 4, 12, 7)
+    figsize_h = st.slider("Figure height (inches)", 4, 16, 10)
     dpi = st.slider("DPI", 72, 600, 300)
 
 def random_palette(k=10):
-    # 简单随机调色板（0~1 浮点）
+    """Return k random RGB tuples in [0,1]."""
     return [(random.random(), random.random(), random.random()) for _ in range(k)]
 
 def blob(center=(0.3, 0.3), r=0.3, points=200, wobble=0.15):
-    angles = np.linspace(0, 2*math.pi, points)
-    radii = r * (1 + wobble*(np.random.rand(points)-0.5))
+    """Generate a wobbly closed shape centered at `center`."""
+    angles = np.linspace(0, 2 * math.pi, points)
+    radii = r * (1 + wobble * (np.random.rand(points) - 0.5))
     x = center[0] + radii * np.cos(angles)
     y = center[1] + radii * np.sin(angles)
     return x, y
 
-# ---- 随机性控制 ----
-if seed_mode == "固定数值":
+# ---- Randomness control ----
+if seed_mode == "Fixed value":
     random.seed(int(seed_value))
     np.random.seed(int(seed_value))
 else:
-    random.seed()  # 时间作为种子
+    random.seed()           # time-based
     np.random.seed(None)
 
-# ---- 绘制 ----
+# ---- Draw poster ----
 fig = plt.figure(figsize=(figsize_w, figsize_h), dpi=dpi)
 ax = plt.gca()
 ax.set_axis_off()
@@ -68,17 +69,18 @@ for _ in range(n_layers):
     x, y = blob(center=(cx, cy), r=rr, points=points, wobble=wb)
     color = random.choice(palette)
     alpha = random.uniform(alpha_min, alpha_max)
-    plt.fill(x, y, color=color, alpha=alpha, edgecolor=(0,0,0,0))
+    plt.fill(x, y, color=color, alpha=alpha, edgecolor=(0, 0, 0, 0))
 
-# 文字标签
-plt.text(0.05, 0.90, "Generative Poster", fontsize=18, weight='bold', transform=ax.transAxes)
+# Poster label
+plt.text(0.05, 0.90, "Generative Poster", fontsize=18, weight="bold", transform=ax.transAxes)
 plt.text(0.05, 0.86, "Week 2 • Made by Boyang Wang", fontsize=11, transform=ax.transAxes)
 plt.text(0.05, 0.83, "Arts and Advanced Big Data", fontsize=11, transform=ax.transAxes)
 plt.xlim(0, 1); plt.ylim(0, 1)
 
 st.pyplot(fig, use_container_width=True)
 
-# ---- 下载按钮（PNG）----
+# ---- Download as PNG ----
 buf = io.BytesIO()
 fig.savefig(buf, format="png", bbox_inches="tight", dpi=dpi)
-st.download_button("下载 PNG", data=buf.getvalue(), file_name="generative_poster.png", mime="image/png")
+st.download_button("Download PNG", data=buf.getvalue(),
+                   file_name="generative_poster.png", mime="image/png")
